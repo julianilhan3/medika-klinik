@@ -36,7 +36,13 @@
                 <div class="rounded-xl border p-4 {{ $loop->first ? 'border-brand-600/40' : 'border-slate-200' }}">
                     <button @click="open = !open" class="flex w-full items-start justify-between gap-3 text-left">
                         <div><p class="font-semibold">{{ $v['date'] }}</p><p class="text-xs text-slate-500">{{ $v['doctor'] ?? 'Dokter Tidak Diketahui' }} - Poli Umum - {{ $v['time'] ?? 'Waktu Tidak Tersedia' }} WIB</p></div>
-                        <div class="flex flex-col items-end gap-2"><x-badge :text="$v['status']" /><span class="flex items-center gap-1 text-xs font-medium text-brand-600"><span x-text="open ? 'Tutup detail' : 'Lihat detail'"></span><x-icon name="lucide:chevron-down" class="text-base transition" ::class="open && 'rotate-180'" /></span></div>
+                       <div class="flex flex-col items-end gap-2">
+                            <x-badge :text="$v['status'] ?? 'Selesai'" />
+                            <span class="flex items-center gap-1 text-xs font-medium text-brand-600">
+                                <span x-text="open ? 'Tutup detail' : 'Lihat detail'"></span>
+                                <x-icon name="lucide:chevron-down" class="text-base transition" ::class="open && 'rotate-180'" />
+                            </span>
+                        </div>
                     </button>
                     <div x-show="open" x-cloak class="mt-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
                         <p class="font-semibold">Catatan pemeriksaan</p>
