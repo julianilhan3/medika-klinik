@@ -44,10 +44,7 @@
         </x-card>
         <p class="mx-auto mt-3 max-w-md text-xs text-slate-500">Lupa password? Hubungi admin klinik.</p>
 
-        <div class="mx-auto mt-4 max-w-md rounded-xl border border-dashed border-slate-300 p-4 text-xs text-slate-500">
-            <p class="font-semibold text-slate-600">Akun demo (hapus saat backend siap)</p>
-            <p class="mt-1">rina.admin &middot; andi.dokter &middot; sari.apoteker &mdash; password: <code>password123</code></p>
-        </div>
+       
     </div>
 </div>
 @endsection

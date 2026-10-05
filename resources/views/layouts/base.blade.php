@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Medika Klinik') - Medika Klinik</title>
+    <img src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Ilustrasi Dokter" class="mx-auto max-h-56 w-full object-contain mix-blend-multiply">
+    <title>Medika Klinik</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
