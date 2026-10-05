@@ -25,7 +25,7 @@
 
     <template x-if="conflicts.length">
         <div class="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><x-icon name="lucide:triangle-alert" class="mt-0.5 text-xl" />
-            <div><p>Pasien memiliki alergi {{ is_string($p['allergies']) ? $p['allergies'] : implode(', ', $p['allergies']) }}. Hapus obat pemicu alergi; resep tidak dapat dikirim sebelum konflik diperbaiki.</p></div></div>
+            <div><p class="font-semibold" x-text="conflicts[0].name + ' berbenturan dengan alergi pasien'"></p><p>Pasien memiliki alergi {{ implode(', ', $p['allergies']) }}. Hapus obat pemicu alergi; resep tidak dapat dikirim sebelum konflik diperbaiki.</p></div></div>
     </template>
 
     <div class="grid gap-5 lg:grid-cols-[22rem_1fr]">
