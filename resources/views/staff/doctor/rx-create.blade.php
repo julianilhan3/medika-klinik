@@ -6,9 +6,9 @@
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5"
      x-data="{
-        meds: @js($medicines), allergies: @js($p['allergies']), q: '', sel: null, f: { dose: '', qty: '', rule: '' }, items: [],
+        meds: @js($medicines ?? []), allergies: @js($p['allergies'] ?? []), q: '', sel: null, f: { dose: '', qty: '', rule: '' }, items: [],
         get results() { const q = this.q.toLowerCase(); return q ? this.meds.filter(m => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q)) : this.meds.slice(0, 6) },
-        conflict(m) { return m.class && this.allergies.includes(m.class) },
+        conflict(m) { return m.class && this.allergies && this.allergies.includes(m.class) },
         pick(m) { this.sel = m; this.f = { dose: '', qty: '', rule: '' } },
         get canAdd() { return this.sel && !this.conflict(this.sel) && this.sel.stock > 0 && this.f.dose && this.f.qty > 0 && this.f.rule },
         add() { this.items.push({ ...this.f, name: this.sel.name, unit: this.sel.unit.toLowerCase(), form: this.sel.form }); this.sel = null; this.q = ''; this.f = { dose: '', qty: '', rule: '' } },
@@ -18,14 +18,14 @@
     @include('staff.doctor._patient-head')
 
     <div class="grid gap-4 sm:grid-cols-3">
-        @foreach ([['Pemeriksaan', 'Tersimpan', 'done'], ['Buat Resep', 'Sedang diisi', 'now'], ['Apotek', 'Belum dikirim', 'todo']] as $i => [$t, $d, $st])
+        @foreach ([['Pemeriksaan', 'Tersimpan', 'done'], ['Buat Resep', 'Sedang diisi', 'now'], ['Apotek', 'Belum dikirim', 'todo']] as $i => [$t, $d,$st])
             <div class="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200/70"><span class="grid size-8 place-items-center rounded-full text-sm font-semibold {{ $st === 'todo' ? 'bg-slate-100 text-slate-400' : 'bg-brand-600 text-white' }}">@if ($st === 'done')<x-icon name="lucide:check" class="text-base" />@else{{ $i + 1 }}@endif</span><div class="leading-tight"><p class="text-sm font-semibold">{{ $t }}</p><p class="text-xs text-slate-500">{{ $d }}</p></div></div>
         @endforeach
     </div>
 
     <template x-if="conflicts.length">
         <div class="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><x-icon name="lucide:triangle-alert" class="mt-0.5 text-xl" />
-            <div><p class="font-semibold" x-text="conflicts[0].name + ' berbenturan dengan alergi pasien'"></p><p>Pasien memiliki alergi {{ implode(', ', $p['allergies']) }}. Hapus obat pemicu alergi; resep tidak dapat dikirim sebelum konflik diperbaiki.</p></div></div>
+            <div><p>Pasien memiliki alergi {{ !empty($p['allergies']) ? (is_array($p['allergies']) ? implode(', ', $p['allergies']) :$p['allergies']) : 'tertentu' }}. Hapus obat pemicu alergi; resep tidak dapat dikirim sebelum konflik diperbaiki.</p></div></div>
     </template>
 
     <div class="grid gap-5 lg:grid-cols-[22rem_1fr]">
@@ -61,7 +61,7 @@
         </x-card>
     </div>
 
-    <form method="POST" action="{{ route('doctor.rx.store', $p['no']) }}">@csrf
+    <form method="POST" action="{{ route('doctor.rx.store', $p['no'] ?? '') }}">@csrf
         <x-card>
             <div class="flex items-center justify-between p-5 pb-3"><h2 class="font-semibold">Ringkasan resep</h2><span class="text-xs text-slate-500" x-text="items.length + ' obat'"></span></div>
             <div class="overflow-x-auto"><table class="tbl min-w-[36rem]">
@@ -80,7 +80,7 @@
             <div class="space-y-3 p-5 pt-3">
                 <div><label class="label">Catatan untuk apoteker (opsional)</label><textarea name="note" rows="2" class="input" placeholder="Contoh: Pemakaian rutin selama 30 hari.">{{ old('note') }}</textarea></div>
                 <button class="btn btn-primary w-full" :disabled="blocked"><x-icon name="lucide:send" x-show="!blocked" /><x-icon name="lucide:lock" x-show="blocked" x-cloak /> Kirim ke Apotek</button>
-                <a href="{{ route('doctor.exam', $p['no']) }}" class="flex items-center justify-center gap-1.5 text-sm font-medium text-slate-600 hover:text-brand-600"><x-icon name="lucide:arrow-left" class="text-base" /> Kembali ke Pemeriksaan</a>
+                <a href="{{ route('doctor.exam', $p['no'] ?? '') }}" class="flex items-center justify-center gap-1.5 text-sm font-medium text-slate-600 hover:text-brand-600"><x-icon name="lucide:arrow-left" class="text-base" /> Kembali ke Pemeriksaan</a>
             </div>
         </x-card>
     </form>
