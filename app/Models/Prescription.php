@@ -31,4 +31,9 @@ class Prescription extends Model
     {
         return $this->hasMany(PrescriptionItem::class);
     }
+
+    public function handedBy()
+    {
+        return $this->belongsTo(User::class, 'handed_by');
+    }
 }
