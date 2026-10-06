@@ -15,6 +15,7 @@ class Examination extends Model
         'bp',
         'temp',
         'pulse',
+        'height',
         'weight',
         'diagnosis',
         'note',

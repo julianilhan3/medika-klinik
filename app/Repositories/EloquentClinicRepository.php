@@ -681,6 +681,7 @@ class EloquentClinicRepository implements ClinicRepository
                 'bp' => $exam->bp ?? '',
                 'temp' => $exam->temp ?? '',
                 'pulse' => $exam->pulse ?? '',
+                'height' => $exam->height ?? '',
                 'weight' => $exam->weight ?? '',
                 'note' => $exam->note ?? '',
                 'rx' => '',

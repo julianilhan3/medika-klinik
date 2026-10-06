@@ -266,6 +266,7 @@ Examination::updateOrCreate(
         'bp' => $r->bp,
         'temp' => $r->temp,
         'pulse' => $r->pulse,
+        'height' => $r->height,
         'weight' => $r->weight,
         'diagnosis' => $r->diagnosis,
         'note' => $note,
