@@ -37,6 +37,7 @@ interface ClinicRepository
     public function queue(array $filters = []): array;
     public function findBooking(string $code): ?array;
     public function bookings(array $filters = []): array;
+    public function createBooking(array $data): array;
 
     // Dokter
     public function appointmentRequests(): array;
