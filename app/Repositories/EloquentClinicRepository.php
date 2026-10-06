@@ -497,38 +497,48 @@ class EloquentClinicRepository implements ClinicRepository
         return (bool) $patient->delete();
     }
 
-    public function updateBooking(string $code, array $data): bool
-    {
-        $booking = Booking::where('code', $code)->first();
+   public function updateBooking(string $code, array $data): bool
+{
+    $booking = Booking::where('code', $code)->first();
 
-        if (!$booking) {
-            return false;
-        }
-
-        $action = $data['action'] ?? null;
-
-        if ($action === 'approve') {
-            $booking->status = 'approved';
-        } elseif ($action === 'reject') {
-            $booking->status = 'rejected';
-            $booking->rejection_reason = $data['reason'] ?? null;
-        } elseif ($action === 'cancel') {
-            $booking->status = 'cancelled';
-        } elseif ($action === 'reschedule') {
-            if (!empty($data['date'])) {
-                $booking->date = $data['date'];
-            }
-
-            if (!empty($data['time'])) {
-                $booking->time = $data['time'];
-            }
-
-            $booking->status = 'pending';
-        }
-
-        return $booking->save();
+    if (!$booking) {
+        return false;
     }
 
+    $action = $data['action'] ?? null;
+
+    if ($action === 'approve') {
+        $booking->status = 'checked_in';
+        $booking->checked_in_at = now();
+
+        if (empty($booking->queue_no)) {
+            $booking->queue_no = $this->nextQueueNumber(
+                (int) $booking->poli_id,
+                $booking->date
+            );
+        }
+
+    } elseif ($action === 'reject') {
+        $booking->status = 'rejected';
+        $booking->rejection_reason = $data['reason'] ?? null;
+
+    } elseif ($action === 'cancel') {
+        $booking->status = 'cancelled';
+
+    } elseif ($action === 'reschedule') {
+        if (!empty($data['date'])) {
+            $booking->date = $data['date'];
+        }
+
+        if (!empty($data['time'])) {
+            $booking->time = $data['time'];
+        }
+
+        $booking->status = 'pending';
+    }
+
+    return $booking->save();
+}
    
     public function createSchedule(array $data): bool
 {
@@ -657,7 +667,11 @@ class EloquentClinicRepository implements ClinicRepository
 
     public function patientVisits(string $patientId, ?string $search = null): array
     {
-        $query = Examination::with(['booking.doctor', 'booking.poli'])
+        $query = Examination::with([
+    'booking.doctor',
+    'booking.poli',
+    'prescription.items.medicine',
+])
             ->whereHas('booking', function ($q) use ($patientId) {
                 $q->where('patient_id', $patientId);
             })
@@ -684,7 +698,18 @@ class EloquentClinicRepository implements ClinicRepository
                 'height' => $exam->height ?? '',
                 'weight' => $exam->weight ?? '',
                 'note' => $exam->note ?? '',
-                'rx' => '',
+'rx' => $exam->prescription?->items
+    ?->map(function ($item) {
+        return $item->medicine?->name
+            . ' - '
+            . $item->dose
+            . ' - '
+            . $item->rule
+            . ' ('
+            . $item->qty
+            . ')';
+    })
+    ->implode(', ') ?? '',
             ])
             ->values()
             ->all();
@@ -927,35 +952,48 @@ class EloquentClinicRepository implements ClinicRepository
     }
 
     public function examHistory(?string $search = null): array
-    {
-        $query = Examination::with(['booking.patient', 'booking.doctor'])
-            ->latest();
+{
+    $query = Examination::with([
+        'booking.patient',
+        'booking.doctor',
+        'prescription.items.medicine',
+    ])->latest();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('diagnosis', 'like', "%{$search}%")
-                    ->orWhereHas('booking.patient', function ($p) use ($search) {
-                        $p->where('name', 'like', "%{$search}%")
-                            ->orWhere('rm', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        return $query->get()
-            ->map(fn ($exam) => [
-                'id' => (string) $exam->id,
-                'date' => $this->formatDate($exam->created_at),
-                'patient' => $exam->booking?->patient?->name ?? '',
-                'complaint' => $exam->complaint ?? '',
-                'diagnosis' => $exam->diagnosis ?? '',
-                'bp' => $exam->bp ?? '',
-                'note' => $exam->note ?? '',
-                'rx' => '',
-            ])
-            ->values()
-            ->all();
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('diagnosis', 'like', "%{$search}%")
+                ->orWhereHas('booking.patient', function ($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%")
+                        ->orWhere('rm', 'like', "%{$search}%");
+                });
+        });
     }
 
+    return $query->get()
+        ->map(fn ($exam) => [
+            'id' => (string) $exam->id,
+            'date' => $this->formatDate($exam->created_at),
+            'patient' => $exam->booking?->patient?->name ?? '',
+            'complaint' => $exam->complaint ?? '',
+            'diagnosis' => $exam->diagnosis ?? '',
+            'bp' => $exam->bp ?? '',
+            'note' => $exam->note ?? '',
+            'rx' => $exam->prescription?->items
+                ?->map(function ($item) {
+                    return $item->medicine?->name
+                        . ' - '
+                        . $item->dose
+                        . ' - '
+                        . $item->rule
+                        . ' ('
+                        . $item->qty
+                        . ')';
+                })
+                ->implode(', ') ?? '',
+        ])
+        ->values()
+        ->all();
+}
     public function pharmacyAlerts(): array
     {
         return Medicine::whereColumn('stock', '<=', 'min_stock')
