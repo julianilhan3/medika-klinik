@@ -35,7 +35,7 @@
     <aside :class="sidebar ? 'translate-x-0' : '-translate-x-full'"
            class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-navy-800 text-slate-200 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0">
         <div class="flex h-16 items-center gap-2.5 px-5">
-           <a href="{{ route('portal.home') }}" class="flex items-center">
+           <a href="#" class="flex items-center">
     <img src="{{ asset('images/logo-dashboard.png') }}" alt="Logo Medika Klinik" class="h-14 mt-5 w-auto object-contain">
 </a> 
         </div>
