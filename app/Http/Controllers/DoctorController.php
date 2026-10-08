@@ -123,43 +123,43 @@ class DoctorController extends Controller
     }
 
     public function call(string $no)
-{
-    $p = $this->patientOrFail($no);
-    $booking = $this->bookingOrFail($no);
+    {
+        $p = $this->patientOrFail($no);
+        $booking = $this->bookingOrFail($no);
 
-    if ($booking->status === 'done') {
-        return back()->with(
-            'error',
-            'Pasien sudah selesai diperiksa.'
-        );
-    }
+        if ($booking->status === 'done') {
+            return back()->with(
+                'error',
+                'Pasien sudah selesai diperiksa.'
+            );
+        }
 
-    if ($booking->status === 'cancelled') {
-        return back()->with(
-            'error',
-            'Pasien sudah ditandai tidak hadir.'
-        );
-    }
+        if ($booking->status === 'cancelled') {
+            return back()->with(
+                'error',
+                'Pasien sudah ditandai tidak hadir.'
+            );
+        }
 
-    Booking::query()
-        ->where('doctor_id', $booking->doctor_id)
-        ->whereDate('date', $booking->date)
-        ->where('status', 'serving')
-        ->update([
-            'status' => 'checked_in',
+        Booking::query()
+            ->where('doctor_id', $booking->doctor_id)
+            ->whereDate('date', $booking->date)
+            ->where('status', 'serving')
+            ->update([
+                'status' => 'checked_in',
+            ]);
+
+        $booking->update([
+            'status' => 'serving',
         ]);
 
-    $booking->update([
-        'status' => 'serving',
-    ]);
-
-    return back()
-        ->with(
-            'status',
-            "Pasien {$p['patient']} ({$no}) dipanggil."
-        )
-        ->with('called', $no);
-}
+        return back()
+            ->with(
+                'status',
+                "Pasien {$p['patient']} ({$no}) dipanggil."
+            )
+            ->with('called', $no);
+    }
 
     public function absent(string $no)
     {
@@ -184,29 +184,29 @@ class DoctorController extends Controller
         );
     }
 
-   public function start(string $no)
-{
-    $this->patientOrFail($no);
-    $booking = $this->bookingOrFail($no);
+    public function start(string $no)
+    {
+        $this->patientOrFail($no);
+        $booking = $this->bookingOrFail($no);
 
-    if ($booking->status !== 'serving') {
-        return back()->with(
-            'error',
-            'Pasien harus dipanggil terlebih dahulu.'
-        );
+        if ($booking->status !== 'serving') {
+            return back()->with(
+                'error',
+                'Pasien harus dipanggil terlebih dahulu.'
+            );
+        }
+
+        $booking->update([
+            'started_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('doctor.record', $no)
+            ->with(
+                'status',
+                'Pemeriksaan dimulai. Tinjau rekam medis sebelum melanjutkan.'
+            );
     }
-
-    $booking->update([
-        'started_at' => now(),
-    ]);
-
-    return redirect()
-        ->route('doctor.record', $no)
-        ->with(
-            'status',
-            'Pemeriksaan dimulai. Tinjau rekam medis sebelum melanjutkan.'
-        );
-}
 
     public function record(string $no)
     {
@@ -258,24 +258,25 @@ class DoctorController extends Controller
             "Pemeriksaan fisik: " . ($r->physical ?? '') . "\n" .
             "Edukasi: " . ($r->education ?? '')
         );
-Examination::updateOrCreate(
-    ['booking_id' => $booking->id],
-    [
-        'doctor_id' => $doctorId,
-        'complaint' => $r->complaint,
-        'bp' => $r->bp,
-        'temp' => $r->temp,
-        'pulse' => $r->pulse,
-        'height' => $r->height,
-        'weight' => $r->weight,
-        'diagnosis' => $r->diagnosis,
-        'note' => $note,
-        'anamnesis' => $r->anamnesis,
-        'icd' => $r->icd,
-        'therapy' => null,
-        'education' => $r->education,
-    ]
-);
+
+        Examination::updateOrCreate(
+            ['booking_id' => $booking->id],
+            [
+                'doctor_id' => $doctorId,
+                'complaint' => $r->complaint,
+                'bp' => $r->bp,
+                'temp' => $r->temp,
+                'pulse' => $r->pulse,
+                'height' => $r->height,
+                'weight' => $r->weight,
+                'diagnosis' => $r->diagnosis,
+                'note' => $note,
+                'anamnesis' => $r->anamnesis,
+                'icd' => $r->icd,
+                'therapy' => null,
+                'education' => $r->education,
+            ]
+        );
 
         return redirect()
             ->route('doctor.rx.create', $no)
