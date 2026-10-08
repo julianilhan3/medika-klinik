@@ -230,7 +230,7 @@ class DoctorController extends Controller
 
     public function record(string $no)
     {
-        $p = $this->readableOrFail($no);
+        $p = $this->patientOrFail($no);
 
         return view('staff.doctor.record', [
             'p' => $p,
@@ -242,13 +242,13 @@ class DoctorController extends Controller
     {
         return view(
             'staff.doctor.exam',
-            ['p' => $this->readableOrFail($no)]
+            ['p' => $this->patientOrFail($no)]
         );
     }
 
     public function storeExam(Request $r, string $no)
     {
-        $p = $this->readableOrFail($no);
+        $p = $this->patientOrFail($no);
         $booking = $this->bookingOrFail($no);
 
         $r->validate([
@@ -308,14 +308,14 @@ Examination::updateOrCreate(
     public function rxCreate(string $no)
     {
         return view('staff.doctor.rx-create', [
-            'p' => $this->readableOrFail($no),
+            'p' => $this->patientOrFail($no),
             'medicines' => $this->repo->medicines(),
         ]);
     }
 
     public function rxStore(Request $r, string $no)
     {
-        $p = $this->readableOrFail($no);
+        $p = $this->patientOrFail($no);
         $booking = $this->bookingOrFail($no);
 
         $r->validate([
