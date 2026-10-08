@@ -52,6 +52,26 @@ class DoctorController extends Controller
         return $booking;
     }
 
+    /**
+     * Gerbang halaman baca (rekam medis, pemeriksaan, resep).
+     *
+     * Pasien yang baru di-check-in admin masih berstatus `checked_in`
+     * dan belum dipanggil, sehingga belum boleh dibaca dokter.
+     * Bacaan dibuka setelah tombol Panggil dijalankan (status `serving`).
+     */
+    private function readableOrFail(string $no): array
+    {
+        $p = $this->patientOrFail($no);
+
+        abort_if(
+            $this->bookingOrFail($no)->status === 'checked_in',
+            403,
+            'Pasien belum dipanggil. Tekan Panggil terlebih dahulu.'
+        );
+
+        return $p;
+    }
+
     private function queueData(): array
     {
         $queue = collect($this->repo->doctorQueue());
@@ -123,43 +143,43 @@ class DoctorController extends Controller
     }
 
     public function call(string $no)
-    {
-        $p = $this->patientOrFail($no);
-        $booking = $this->bookingOrFail($no);
+{
+    $p = $this->patientOrFail($no);
+    $booking = $this->bookingOrFail($no);
 
-        if ($booking->status === 'done') {
-            return back()->with(
-                'error',
-                'Pasien sudah selesai diperiksa.'
-            );
-        }
+    if ($booking->status === 'done') {
+        return back()->with(
+            'error',
+            'Pasien sudah selesai diperiksa.'
+        );
+    }
 
-        if ($booking->status === 'cancelled') {
-            return back()->with(
-                'error',
-                'Pasien sudah ditandai tidak hadir.'
-            );
-        }
+    if ($booking->status === 'cancelled') {
+        return back()->with(
+            'error',
+            'Pasien sudah ditandai tidak hadir.'
+        );
+    }
 
-        Booking::query()
-            ->where('doctor_id', $booking->doctor_id)
-            ->whereDate('date', $booking->date)
-            ->where('status', 'serving')
-            ->update([
-                'status' => 'checked_in',
-            ]);
-
-        $booking->update([
-            'status' => 'serving',
+    Booking::query()
+        ->where('doctor_id', $booking->doctor_id)
+        ->whereDate('date', $booking->date)
+        ->where('status', 'serving')
+        ->update([
+            'status' => 'checked_in',
         ]);
 
-        return back()
-            ->with(
-                'status',
-                "Pasien {$p['patient']} ({$no}) dipanggil."
-            )
-            ->with('called', $no);
-    }
+    $booking->update([
+        'status' => 'serving',
+    ]);
+
+    return back()
+        ->with(
+            'status',
+            "Pasien {$p['patient']} ({$no}) dipanggil."
+        )
+        ->with('called', $no);
+}
 
     public function absent(string $no)
     {
@@ -184,33 +204,33 @@ class DoctorController extends Controller
         );
     }
 
-    public function start(string $no)
-    {
-        $this->patientOrFail($no);
-        $booking = $this->bookingOrFail($no);
+   public function start(string $no)
+{
+    $this->patientOrFail($no);
+    $booking = $this->bookingOrFail($no);
 
-        if ($booking->status !== 'serving') {
-            return back()->with(
-                'error',
-                'Pasien harus dipanggil terlebih dahulu.'
-            );
-        }
-
-        $booking->update([
-            'started_at' => now(),
-        ]);
-
-        return redirect()
-            ->route('doctor.record', $no)
-            ->with(
-                'status',
-                'Pemeriksaan dimulai. Tinjau rekam medis sebelum melanjutkan.'
-            );
+    if ($booking->status !== 'serving') {
+        return back()->with(
+            'error',
+            'Pasien harus dipanggil terlebih dahulu.'
+        );
     }
+
+    $booking->update([
+        'started_at' => now(),
+    ]);
+
+    return redirect()
+        ->route('doctor.record', $no)
+        ->with(
+            'status',
+            'Pemeriksaan dimulai. Tinjau rekam medis sebelum melanjutkan.'
+        );
+}
 
     public function record(string $no)
     {
-        $p = $this->patientOrFail($no);
+        $p = $this->readableOrFail($no);
 
         return view('staff.doctor.record', [
             'p' => $p,
@@ -222,13 +242,13 @@ class DoctorController extends Controller
     {
         return view(
             'staff.doctor.exam',
-            ['p' => $this->patientOrFail($no)]
+            ['p' => $this->readableOrFail($no)]
         );
     }
 
     public function storeExam(Request $r, string $no)
     {
-        $p = $this->patientOrFail($no);
+        $p = $this->readableOrFail($no);
         $booking = $this->bookingOrFail($no);
 
         $r->validate([
@@ -258,25 +278,24 @@ class DoctorController extends Controller
             "Pemeriksaan fisik: " . ($r->physical ?? '') . "\n" .
             "Edukasi: " . ($r->education ?? '')
         );
-
-        Examination::updateOrCreate(
-            ['booking_id' => $booking->id],
-            [
-                'doctor_id' => $doctorId,
-                'complaint' => $r->complaint,
-                'bp' => $r->bp,
-                'temp' => $r->temp,
-                'pulse' => $r->pulse,
-                'height' => $r->height,
-                'weight' => $r->weight,
-                'diagnosis' => $r->diagnosis,
-                'note' => $note,
-                'anamnesis' => $r->anamnesis,
-                'icd' => $r->icd,
-                'therapy' => null,
-                'education' => $r->education,
-            ]
-        );
+Examination::updateOrCreate(
+    ['booking_id' => $booking->id],
+    [
+        'doctor_id' => $doctorId,
+        'complaint' => $r->complaint,
+        'bp' => $r->bp,
+        'temp' => $r->temp,
+        'pulse' => $r->pulse,
+        'height' => $r->height,
+        'weight' => $r->weight,
+        'diagnosis' => $r->diagnosis,
+        'note' => $note,
+        'anamnesis' => $r->anamnesis,
+        'icd' => $r->icd,
+        'therapy' => null,
+        'education' => $r->education,
+    ]
+);
 
         return redirect()
             ->route('doctor.rx.create', $no)
@@ -289,14 +308,14 @@ class DoctorController extends Controller
     public function rxCreate(string $no)
     {
         return view('staff.doctor.rx-create', [
-            'p' => $this->patientOrFail($no),
+            'p' => $this->readableOrFail($no),
             'medicines' => $this->repo->medicines(),
         ]);
     }
 
     public function rxStore(Request $r, string $no)
     {
-        $p = $this->patientOrFail($no);
+        $p = $this->readableOrFail($no);
         $booking = $this->bookingOrFail($no);
 
         $r->validate([
