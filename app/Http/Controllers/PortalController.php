@@ -210,13 +210,16 @@ class PortalController extends Controller
                 $pre['id'] ?? 'D-003',
                 $date ?: now()->toDateString()
             ),
-            'pre' => $pre
-                ? [
-                    'poli' => $pre['poli'],
-                    'doctor' => $pre['name'],
-                    'date' => $date,
-                ]
-                : null,
+            
+'pre' => $pre
+    ? [
+        'poli' => $pre['poli'],
+        'doctor' => $pre['id'],
+        'doctorName' => $pre['name'],
+        'date' => $date,
+    ]
+    : null,
+
         ]);
     }
     public function bookingSlots(Request $r)
@@ -324,23 +327,32 @@ class PortalController extends Controller
         ]);
     }
 
-    public function tickets()
-    {
-        $all = collect(
-            $this->repo->tickets(session('patient.id'))
-        );
 
-        return view('portal.tickets', [
-            'active' => $all->whereIn(
-                'status',
-                ['Aktif', 'Menunggu Persetujuan']
-            ),
-            'history' => $all->whereNotIn(
-                'status',
-                ['Aktif', 'Menunggu Persetujuan']
-            ),
-        ]);
-    }
+public function tickets()
+{
+    $all = collect(
+        $this->repo->tickets(session('patient.id'))
+    );
+
+    $activeStatuses = [
+        'Aktif',
+        'Menunggu Persetujuan',
+        'Disetujui',
+        'Check-in',
+    ];
+
+    return view('portal.tickets', [
+        'active' => $all->whereIn(
+            'status',
+            $activeStatuses
+        )->values(),
+
+        'history' => $all->whereNotIn(
+            'status',
+            $activeStatuses
+        )->values(),
+    ]);
+}
 
     public function ticket(string $code)
     {

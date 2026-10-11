@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Repositories;
 
+use App\Models\DoctorLeave;
 use App\Contracts\ClinicRepository;
 use App\Models\Booking;
 use App\Models\DoctorSchedule;
@@ -14,6 +14,7 @@ use App\Models\PrescriptionItem;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -31,30 +32,37 @@ class EloquentClinicRepository implements ClinicRepository
             ?? 'D-' . str_pad((string) $doctor->id, 3, '0', STR_PAD_LEFT);
     }
 
-    private function resolveDoctor(string $doctorId): ?User
-    {
-        if (preg_match('/^D-\d{3}$/i', $doctorId)) {
-            $map = [
-                'D-001' => 'drandi',
-                'D-002' => 'drbudi',
-                'D-003' => 'drsiti',
-            ];
 
-            $username = $map[strtoupper($doctorId)] ?? null;
+private function resolveDoctor(string $doctorId): ?User
+{
+    $doctorId = strtoupper(trim($doctorId));
 
-            if ($username) {
-                return User::query()
-                    ->where('username', $username)
-                    ->where('role', 'doctor')
-                    ->first();
-            }
-        }
+    $map = [
+        'D-001' => 'drandi',
+        'D-002' => 'drbudi',
+        'D-003' => 'drsiti',
+    ];
 
+    if (isset($map[$doctorId])) {
         return User::query()
-            ->where('id', $doctorId)
+            ->where('username', $map[$doctorId])
             ->where('role', 'doctor')
             ->first();
     }
+
+    if (preg_match('/^D-(\d{3})$/', $doctorId, $matches)) {
+        return User::query()
+            ->whereKey((int) $matches[1])
+            ->where('role', 'doctor')
+            ->first();
+    }
+
+    return User::query()
+        ->whereKey($doctorId)
+        ->where('role', 'doctor')
+        ->first();
+}
+
 
     private function statusLabel(?string $status): string
     {
@@ -204,6 +212,17 @@ class EloquentClinicRepository implements ClinicRepository
         if (! $schedule) {
             return [];
         }
+
+        
+$leave = DoctorLeave::query()
+    ->where('doctor_id', $doctor->id)
+    ->whereDate('date', $date)
+    ->first();
+
+if ($leave && $leave->scope === 'full') {
+    return [];
+}
+
 
         $start = Carbon::createFromFormat(
             'H:i',
@@ -766,12 +785,14 @@ class EloquentClinicRepository implements ClinicRepository
             ->all();
     }
 
-    public function doctorQueue(): array
-    {
-        $doctor = User::query()
-            ->where('id', auth()->id())
-            ->where('role', 'doctor')
-            ->first();
+public function doctorQueue(): array
+{
+    $userId = \Illuminate\Support\Facades\Auth::id();
+
+    $doctor = User::query()
+        ->where('id', $userId)
+        ->where('role', 'doctor')
+        ->first();
 
         if (! $doctor) {
             $doctor = User::query()

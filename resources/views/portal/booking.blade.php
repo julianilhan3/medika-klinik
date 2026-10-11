@@ -7,20 +7,29 @@
 @php $p = session('patient'); @endphp
 
 <form method="POST" action="{{ route('booking.store') }}" class="mx-auto max-w-4xl"
-    x-data="{
-        step: 1,
-        poli: '{{ old('poli') }}',
-        doctor: '{{ old('doctor') }}',
-        date: '{{ old('date') }}',
-        time: '{{ old('time') }}',
-        complaint: @js(old('complaint', '')),
-        doctors: @js($doctors),
-        slots: @js($slots),
-        loadingSlots: false,
+    
+x-data="{
+    step: 1,
+
+    poli: @js(old('poli', data_get($pre, 'poli', ''))),
+    doctor: @js(old('doctor', data_get($pre, 'doctor', ''))),
+    date: @js(old('date', data_get($pre, 'date', ''))),
+    time: @js(old('time', '')),
+    complaint: @js(old('complaint', '')),
+
+    doctors: @js($doctors),
+    slots: @js($slots),
+    loadingSlots: false,
 
     get list() {
         return this.doctors.filter(
             d => d.poli === this.poli && d.status === 'Aktif'
+        )
+    },
+
+    get selectedDoctor() {
+        return this.doctors.find(
+            d => String(d.id) === String(this.doctor)
         )
     },
 
@@ -43,14 +52,14 @@
     },
 
     async pickDoctor(id) {
-    this.doctor = id
-    this.time = ''
-    this.slots = []
+        this.doctor = id
+        this.time = ''
+        this.slots = []
 
-    if (this.date) {
-        await this.loadSlots()
-    }
-},
+        if (this.date) {
+            await this.loadSlots()
+        }
+    },
 
     async loadSlots() {
         this.time = ''
@@ -87,15 +96,19 @@
 
     fmt(d) {
         return d
-            ? new Date(d + 'T00:00:00').toLocaleDateString('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            })
+            ? new Date(d + 'T00:00:00').toLocaleDateString(
+                'id-ID',
+                {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }
+            )
             : '-'
     }
 }"
+
 
 >
 
@@ -548,7 +561,7 @@
 
                 <div class="flex justify-between gap-4 py-2.5">
                     <dt class="text-slate-500">Dokter</dt>
-                    <dd class="text-right font-medium" x-text="doctor"></dd>
+                    <dd class="text-right font-medium" x-text="selectedDoctor?.name || 'Pilih dokter'"></dd>
                 </div>
 
                 <div class="flex justify-between gap-4 py-2.5">

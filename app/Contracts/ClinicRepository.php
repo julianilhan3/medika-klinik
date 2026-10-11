@@ -37,6 +37,7 @@ interface ClinicRepository
     public function queue(array $filters = []): array;
     public function findBooking(string $code): ?array;
     public function bookings(array $filters = []): array;
+    public function createBooking(array $data): array;
 
     // Dokter
     public function appointmentRequests(): array;
@@ -54,4 +55,35 @@ interface ClinicRepository
     public function staff(string $role): array;
     public function report(): array;
     public function dashboard(): array;
+    
+    
+    // Admin: check-in, pasien, dan booking
+    public function checkinBooking(string $code): bool;
+
+    public function createPatient(array $data): array;
+
+    public function updatePatient(
+        string $id,
+        array $data
+    ): bool;
+
+    public function deletePatient(string $id): bool;
+
+    public function updateBooking(
+        string $code,
+        array $data
+    ): bool;
+
+    // Admin: jadwal dan staf
+    public function createSchedule(array $data): bool;
+
+    public function createStaff(array $data): array;
+
+    public function updateStaff(
+        string $id,
+        array $data
+    ): bool;
+
+    public function deleteStaff(string $id): bool;
+
 }

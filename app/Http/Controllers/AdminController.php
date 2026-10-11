@@ -1,7 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Models\DoctorLeave;
+use App\Models\User;
 use App\Contracts\ClinicRepository;
 use Illuminate\Http\Request;
 use App\Support\DoctorPhoto;
@@ -281,24 +282,84 @@ public function storeSchedule(Request $r)
     );
 }
 
+
 public function blockLeave(Request $r)
 {
-    
-        $d = $r->validate(['doctor' => 'required', 'date' => 'required|date|after_or_equal:today', 'reason' => 'required|string|max:255', 'scope' => 'required|in:full,session', 'confirm' => 'nullable|boolean']);
-        $conflicts = $this->repo->leaveConflicts($d['doctor'], $d['date']);
+    $d = $r->validate([
+        'doctor' => 'required|string',
+        'date' => 'required|date|after_or_equal:today',
+        'reason' => 'required|string|max:255',
+        'scope' => 'required|in:full,session',
+        'confirm' => 'nullable|boolean',
+    ]);
 
-        if ($conflicts && ! $r->boolean('confirm')) {
-            $doc = collect($this->repo->doctors())->firstWhere('id', $d['doctor']);
-            return back()->withInput()->with('leave_conflict', [
-                'rows' => $conflicts, 'doctor' => $doc['name'], 'poli' => $doc['poli'], 'date' => \Illuminate\Support\Carbon::parse($d['date'])->translatedFormat('l, j F Y'),
-                'reason' => $d['reason'], 'scope' => $d['scope'], 'raw' => $d,
-            ]);
-        }
-
-        // BACKEND: simpan cuti; jika $conflicts ada dan confirm = 1, batalkan reservasi + notifikasi pasien dalam satu transaksi.
-        $n = count($conflicts);
-        return redirect()->route('admin.schedule', ['doctor' => $d['doctor']])->with('status', $n ? "Cuti diblokir dan {$n} reservasi dibatalkan. Pasien diberi tahu." : 'Cuti diblokir.');
+    if ($d['scope'] !== 'full') {
+        return back()
+            ->withInput()
+            ->with(
+                'error',
+                'Cuti satu sesi belum tersedia. Pilih cuti sehari penuh.'
+            );
     }
+
+    
+$doctorInfo = collect($this->repo->doctors())
+    ->firstWhere('id', $d['doctor']);
+
+$doctor = null;
+
+if ($doctorInfo && ! empty($doctorInfo['username'])) {
+    $doctor = User::query()
+        ->where('username', $doctorInfo['username'])
+        ->where('role', 'doctor')
+        ->first();
+}
+
+if (! $doctor) {
+    return back()->with(
+        'error',
+        'Dokter tidak ditemukan.'
+    );
+}
+
+
+    $conflicts = $this->repo->leaveConflicts(
+        $d['doctor'],
+        $d['date']
+    );
+
+    if ($conflicts && ! $r->boolean('confirm')) {
+        $doc = collect($this->repo->doctors())
+            ->firstWhere('id', $d['doctor']);
+
+        return back()->withInput()->with('leave_conflict', [
+            'rows' => $conflicts,
+            'doctor' => $doc['name'] ?? $doctor->name,
+            'poli' => $doc['poli'] ?? '-',
+            'date' => \Illuminate\Support\Carbon::parse($d['date'])
+                ->translatedFormat('l, j F Y'),
+            'reason' => $d['reason'],
+            'scope' => $d['scope'],
+            'raw' => $d,
+        ]);
+    }
+
+    DoctorLeave::updateOrCreate(
+        [
+            'doctor_id' => $doctor->id,
+            'date' => $d['date'],
+        ],
+        [
+            'scope' => 'full',
+            'reason' => $d['reason'],
+        ]
+    );
+
+    return redirect()
+        ->route('admin.schedule', ['doctor' => $d['doctor']])
+        ->with('status', 'Cuti dokter berhasil disimpan.');
+}
+
 
     public function reports()
     {

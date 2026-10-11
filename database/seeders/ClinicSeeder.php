@@ -1,7 +1,7 @@
 <?php
 
 namespace Database\Seeders;
-
+use App\Models\DoctorSchedule;
 use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\Poli;
@@ -52,6 +52,21 @@ class ClinicSeeder extends Seeder
             ]
         );
 
+        
+User::updateOrCreate(
+    ['username' => 'drrina'],
+    [
+        'name' => 'Dr. Rina Pratama',
+        'email' => 'drrina@medika.test',
+        'password' => Hash::make('password'),
+        'role' => 'doctor',
+        'phone' => '081234567895',
+        'sip' => 'SIP-UMUM-004',
+        'poli_id' => $umum->id,
+    ]
+);
+
+
         User::updateOrCreate(
             ['username' => 'drsiti'],
             [
@@ -88,6 +103,50 @@ class ClinicSeeder extends Seeder
                 'phone' => '081234567894',
             ]
         );
+
+        
+$budi = User::where('username', 'drbudi')
+    ->where('role', 'doctor')
+    ->firstOrFail();
+
+$rina = User::where('username', 'drrina')
+    ->where('role', 'doctor')
+    ->firstOrFail();
+
+$jadwalRutin = [
+    [
+        'doctor_id' => $budi->id,
+        'start' => '08:00:00',
+        'end' => '13:00:00',
+        'room' => 'Poli Umum',
+        'quota' => 10,
+    ],
+    [
+        'doctor_id' => $rina->id,
+        'start' => '13:00:00',
+        'end' => '19:00:00',
+        'room' => 'Poli Umum',
+        'quota' => 10,
+    ],
+];
+
+foreach ($jadwalRutin as $jadwal) {
+    for ($day = 0; $day <= 5; $day++) {
+        DoctorSchedule::updateOrCreate(
+            [
+                'doctor_id' => $jadwal['doctor_id'],
+                'day' => $day,
+            ],
+            [
+                'start' => $jadwal['start'],
+                'end' => $jadwal['end'],
+                'room' => $jadwal['room'],
+                'quota' => $jadwal['quota'],
+            ]
+        );
+    }
+}
+
 
         Patient::updateOrCreate(
             ['nik' => '3173000000000001'],

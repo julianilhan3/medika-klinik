@@ -48,9 +48,16 @@
                          x-transition:enter-start="translate-y-3 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
                          class="relative rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
 
-                    <span class="absolute right-3 top-3 rounded-md px-2 py-0.5 text-xs font-semibold {{ $d['available'] ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600' }}">
-                        {{ $d['available'] ? 'Tersedia' : 'Penuh' }}
-                    </span>
+                    
+<span class="absolute right-3 top-3 rounded-md px-2 py-0.5 text-xs font-semibold
+    {{ $d['label'] === 'Tersedia'
+        ? 'bg-emerald-50 text-emerald-700'
+        : ($d['label'] === 'Penuh'
+            ? 'bg-red-50 text-red-600'
+            : 'bg-slate-100 text-slate-600') }}">
+    {{ $d['label'] }}
+</span>
+
 
                     {{-- Foto diambil otomatis dari unggahan admin (berdasarkan nama dokter) --}}
                     <x-doctor-avatar :name="$d['name']" size="size-16" />

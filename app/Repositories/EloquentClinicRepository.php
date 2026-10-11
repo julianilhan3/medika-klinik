@@ -14,6 +14,7 @@ use App\Models\PrescriptionItem;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -896,9 +897,14 @@ class EloquentClinicRepository implements ClinicRepository
             ->all();
     }
 
-    public function doctorQueue(): array
-    {
-        $doctor = User::find(auth()->id());
+public function doctorQueue(): array
+{
+    $doctorId = Auth::id();
+
+    $doctor = User::query()
+        ->whereKey($doctorId)
+        ->where('role', 'doctor')
+        ->first();
 
         if (!$doctor || $doctor->role !== 'doctor') {
             $doctor = User::where('role', 'doctor')->first();
