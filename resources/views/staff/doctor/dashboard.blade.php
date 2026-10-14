@@ -48,12 +48,28 @@
         @endif
         <x-card class="p-5">
             <h2 class="font-semibold">Pesan dari apotek</h2>
-            @forelse ($alerts as $al)
-                <div class="mt-3 flex gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><x-icon name="lucide:bell-ring" class="mt-0.5 text-lg" />
-                    <div><p class="font-semibold">{{ $al['code'] }} - {{ $al['patient'] }} <span class="font-normal text-amber-700">({{ $al['time'] }})</span></p><p>{{ $al['note'] }}</p></div></div>
-            @empty
-                <p class="mt-3 text-sm text-slate-500">Tidak ada catatan dari apotek.</p>
-            @endforelse
+@forelse ($alerts as $al)
+    <div class="mt-3 flex gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+        <x-icon name="lucide:bell-ring" class="mt-0.5 text-lg" />
+
+        <div>
+            <p class="font-semibold">
+                {{ $al['code'] ?? '-' }} -
+                {{ $al['medicine'] ?? $al['name'] ?? 'Obat tidak diketahui' }}
+
+                <span class="font-normal text-amber-700">
+                    (Stok: {{ $al['stock'] ?? '-' }})
+                </span>
+            </p>
+
+            <p>{{ $al['note'] ?? 'Stok obat menipis.' }}</p>
+        </div>
+    </div>
+@empty
+    <p class="mt-3 text-sm text-slate-500">
+        Tidak ada peringatan stok obat.
+    </p>
+@endforelse
         </x-card>
     </div>
 </div>
