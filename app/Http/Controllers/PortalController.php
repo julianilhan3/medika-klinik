@@ -702,28 +702,30 @@ public function tickets()
         ];
     }
 
-    private function generateRm(): string
-    {
-    // Ambil RM yang nilainya paling besar secara urutan teks/alfabet
-    $last = Patient::query()
+    
+private function generateRm(): string
+{
+    $lastNumber = Patient::query()
         ->where('rm', 'LIKE', 'RM-%')
-        ->orderByDesc('rm')
-        ->value('rm');
+        ->selectRaw(
+            'MAX(CAST(SUBSTRING(rm, 4) AS UNSIGNED)) AS max_number'
+        )
+        ->value('max_number');
 
-    $number = 1;
+    $number = ((int) $lastNumber) + 1;
 
-    if ($last && preg_match('/(\d+)$/', $last, $m)) {
-        $number = ((int) $m[1]) + 1;
-    }
+    do {
+        $newRm = 'RM-' . str_pad(
+            (string) $number,
+            6,
+            '0',
+            STR_PAD_LEFT
+        );
 
-    $newRm = 'RM-' . str_pad((string) $number, 6, '0', STR_PAD_LEFT);
-
-    // Bikin proteksi ekstra: kalau ternyata RM-nya masih terpakai di DB, otomatis naikin angkanya +1
-    while (Patient::where('rm', $newRm)->exists()) {
         $number++;
-        $newRm = 'RM-' . str_pad((string) $number, 6, '0', STR_PAD_LEFT);
-    }
+    } while (Patient::where('rm', $newRm)->exists());
 
     return $newRm;
-    }
+}
+
 }
