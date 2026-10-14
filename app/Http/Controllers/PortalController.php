@@ -99,9 +99,21 @@ class PortalController extends Controller
 
         $allTickets = collect($this->repo->tickets($id));
 
-        $active = $allTickets
-            ->whereIn('status', ['Aktif', 'Menunggu Persetujuan'])
-            ->first();
+
+$active = $allTickets
+    ->whereIn('status', [
+        'Aktif',
+        'Menunggu Persetujuan',
+        'Disetujui',
+        'Check-in',
+    ])
+    ->sortBy(function ($ticket) {
+        return \Illuminate\Support\Carbon::parse(
+            $ticket['date']
+        )->timestamp;
+    })
+    ->first();
+
 
         $featured = collect($this->repo->doctors())
             ->where('status', 'Aktif')
@@ -692,21 +704,26 @@ public function tickets()
 
     private function generateRm(): string
     {
-        $last = Patient::query()
-            ->orderByDesc('id')
-            ->value('rm');
+    // Ambil RM yang nilainya paling besar secara urutan teks/alfabet
+    $last = Patient::query()
+        ->where('rm', 'LIKE', 'RM-%')
+        ->orderByDesc('rm')
+        ->value('rm');
 
-        $number = 1;
+    $number = 1;
 
-        if ($last && preg_match('/(\d+)$/', $last, $m)) {
-            $number = ((int) $m[1]) + 1;
-        }
+    if ($last && preg_match('/(\d+)$/', $last, $m)) {
+        $number = ((int) $m[1]) + 1;
+    }
 
-        return 'RM-' . str_pad(
-            (string) $number,
-            6,
-            '0',
-            STR_PAD_LEFT
-        );
+    $newRm = 'RM-' . str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+
+    // Bikin proteksi ekstra: kalau ternyata RM-nya masih terpakai di DB, otomatis naikin angkanya +1
+    while (Patient::where('rm', $newRm)->exists()) {
+        $number++;
+        $newRm = 'RM-' . str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+    }
+
+    return $newRm;
     }
 }

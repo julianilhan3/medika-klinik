@@ -64,7 +64,14 @@
 
                     <h3 class="mt-3 font-semibold">{{ $d['name'] }}</h3>
                     <p class="text-sm text-slate-500">{{ $d['poli'] }}</p>
-                    <p class="mt-2 flex items-center gap-2 text-sm text-slate-600"><x-icon name="lucide:clock" /> {{ $d['time'] }} WIB</p>
+                    <p class="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                        <x-icon name="lucide:clock" />
+                        @if ($d['time'])
+                            {{ $d['time'] }} WIB
+                        @else
+                            Tidak ada jadwal praktik
+                        @endif
+                    </p>
                     <p class="text-xs text-slate-500">Sisa kuota: {{ $d['quota'] }}</p>
 
                     @if ($d['available'])
