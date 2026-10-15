@@ -253,11 +253,11 @@ class DoctorController extends Controller
 
         $doctorId = Auth::id() ?: $booking->doctor_id;
 
-        $note = trim(
-            "Tinggi badan: {$r->height} cm\n" .
-            "Pemeriksaan fisik: " . ($r->physical ?? '') . "\n" .
-            "Edukasi: " . ($r->education ?? '')
-        );
+        $note = collect([
+    $r->filled('physical')  ? 'Pemeriksaan fisik: ' . $r->physical  : null,
+    $r->filled('education') ? 'Edukasi: ' . $r->education           : null,
+])->filter()->implode("\n");
+
 Examination::updateOrCreate(
     ['booking_id' => $booking->id],
     [
