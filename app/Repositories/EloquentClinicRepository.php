@@ -666,13 +666,13 @@ class EloquentClinicRepository implements ClinicRepository
         return [];
     }
 
-    public function patientVisits(string $patientId, ?string $search = null): array
+      public function patientVisits(string $patientId, ?string $search = null): array
     {
         $query = Examination::with([
-    'booking.doctor',
-    'booking.poli',
-    'prescription.items.medicine',
-])
+            'booking.doctor',
+            'booking.poli',
+            'prescription.items.medicine',
+        ])
             ->whereHas('booking', function ($q) use ($patientId) {
                 $q->where('patient_id', $patientId);
             })
@@ -689,28 +689,48 @@ class EloquentClinicRepository implements ClinicRepository
             ->map(fn ($exam) => [
                 'id' => (string) $exam->id,
                 'date' => $this->formatDate($exam->created_at),
+                'date_label' => $this->formatDate($exam->created_at),
                 'doctor' => $exam->booking?->doctor?->name ?? '',
                 'poli' => $exam->booking?->poli?->name ?? '',
                 'complaint' => $exam->complaint ?? '',
                 'diagnosis' => $exam->diagnosis ?? '',
+                'icd' => $exam->icd ?? '',
+                'diagnoses' => filled($exam->diagnosis)
+                    ? [[
+                        'name' => $exam->diagnosis,
+                        'code' => $exam->icd ?? '',
+                    ]]
+                    : [],
                 'bp' => $exam->bp ?? '',
                 'temp' => $exam->temp ?? '',
                 'pulse' => $exam->pulse ?? '',
                 'height' => $exam->height ?? '',
                 'weight' => $exam->weight ?? '',
                 'note' => $exam->note ?? '',
-'rx' => $exam->prescription?->items
-    ?->map(function ($item) {
-        return $item->medicine?->name
-            . ' - '
-            . $item->dose
-            . ' - '
-            . $item->rule
-            . ' ('
-            . $item->qty
-            . ')';
-    })
-    ->implode(', ') ?? '',
+                'findings' => $exam->note ?? '',
+                'rx' => $exam->prescription?->items
+                    ?->map(function ($item) {
+                        return $item->medicine?->name
+                            . ' - '
+                            . $item->dose
+                            . ' - '
+                            . $item->rule
+                            . ' ('
+                            . $item->qty
+                            . ')';
+                    })
+                    ->implode(', ') ?? '',
+                'rx_code' => $exam->prescription?->code,
+                'rx_status' => $exam->prescription?->status,
+                'rx_note' => $exam->prescription?->note ?? '',
+                'meds' => $exam->prescription?->items
+                    ?->map(fn ($item) => [
+                        'name' => $item->medicine?->name ?? '-',
+                        'rule' => trim(($item->dose ? $item->dose . ', ' : '') . $item->rule),
+                        'qty' => trim($item->qty . ' ' . strtolower($item->medicine?->unit ?? '')),
+                    ])
+                    ->values()
+                    ->all() ?? [],
             ])
             ->values()
             ->all();

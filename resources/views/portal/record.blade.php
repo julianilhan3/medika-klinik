@@ -33,7 +33,7 @@
         </section>
 
         <section><h2 class="font-semibold">Keluhan</h2><p class="mt-1 text-sm text-slate-600">{{ $v['complaint'] }}</p></section>
-        <section><h2 class="font-semibold">Hasil Pemeriksaan</h2><p class="mt-1 text-sm text-slate-600">{{ $v['findings'] }}</p></section>
+        <section><h2 class="font-semibold">Hasil Pemeriksaan</h2><p class="mt-1 whitespace-pre-line text-sm text-slate-600">{{ trim(preg_replace('/^Tinggi badan:.*\R?/m', '', $v['findings'])) }}</p></section>
 
         <section>
             <h2 class="font-semibold">Diagnosis</h2>
@@ -48,7 +48,19 @@
         </section>
 
         <section>
-            <div class="flex items-center justify-between"><h2 class="font-semibold">Daftar Resep</h2><span class="text-xs text-slate-500">{{ count($v['meds']) }} obat</span></div>
+          <div class="flex items-center justify-between">
+    <h2 class="font-semibold">Daftar Resep</h2>
+    <span class="flex items-center gap-2 text-xs text-slate-500">
+        @if (!empty($v['rx_status']))
+            <x-badge :text="match($v['rx_status']) {
+                'Siap'       => 'Siap Diambil',
+                'Diserahkan' => 'Sudah Diserahkan',
+                default      => $v['rx_status'],
+            }" :tone="in_array($v['rx_status'], ['Siap', 'Diserahkan'], true) ? 'green' : null" />
+        @endif
+        {{ count($v['meds']) }} obat
+    </span>
+</div>
             <div class="mt-2 space-y-2">
                 @forelse ($v['meds'] as $m)
                     <div class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
