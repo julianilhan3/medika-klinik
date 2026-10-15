@@ -53,8 +53,10 @@
 
     {{-- Daftar Kartu Resep --}}
     <div class="space-y-4">
-        @forelse ($list ?? [] as $i => $r)
-            @php [$label, $tone, $icon, $note] = $map[$r['status']] ?? $map['Menunggu']; @endphp
+     @php
+    $st = trim((string) $r['status']);
+    [$label, $tone, $icon, $note] = $map[$st] ?? [$st, 'bg-slate-100 text-slate-600', 'lucide:help-circle', 'Status: ' . $st];
+@endphp
             
             <x-card class="p-5 transition-shadow hover:shadow-md border border-slate-200" x-data="{ s: false }" x-init="setTimeout(() => s = true, {{ $i * 70 }})" ::class="s ? 'opacity-100' : 'opacity-0'">
                 
