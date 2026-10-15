@@ -13,7 +13,7 @@
         'Menunggu'       => ['Menunggu',            'bg-amber-50 text-amber-600',   'lucide:clock',           'Resep menunggu verifikasi apotek'],
         'Diproses'       => ['Diproses',            'bg-brand-50 text-brand-600',   'lucide:rotate-cw',       'Obat sedang disiapkan apotek'],
         'Siap'           => ['Siap Diambil',        'bg-emerald-50 text-emerald-600', 'lucide:check-circle',    'Silakan ambil di loket apotek'],
-        'Diambil'        => ['Sudah Diambil',       'bg-slate-100 text-slate-600',  'lucide:check-circle-2',  'Pengambilan obat selesai'],
+        'Diserahkan'     => ['Sudah Diserahkan',    'bg-slate-100 text-slate-600',  'lucide:check-circle-2',  'Obat sudah diserahkan oleh apotek'],
         'Tidak Tersedia' => ['Obat Tidak Tersedia', 'bg-red-50 text-red-600',       'lucide:alert-circle',    'Hubungi apotek untuk informasi obat'],
     ];
 @endphp
@@ -53,23 +53,24 @@
 
     {{-- Daftar Kartu Resep --}}
     <div class="space-y-4">
-     @php
-    $st = trim((string) $r['status']);
-    [$label, $tone, $icon, $note] = $map[$st] ?? [$st, 'bg-slate-100 text-slate-600', 'lucide:help-circle', 'Status: ' . $st];
-@endphp
-            
+        @forelse ($list as $i => $r)
+            @php
+                $st = trim((string) $r['status']);
+                [$label, $tone, $icon, $note] = $map[$st] ?? [$st, 'bg-slate-100 text-slate-600', 'lucide:help-circle', 'Status: ' . $st];
+            @endphp
+
             <x-card class="p-5 transition-shadow hover:shadow-md border border-slate-200" x-data="{ s: false }" x-init="setTimeout(() => s = true, {{ $i * 70 }})" ::class="s ? 'opacity-100' : 'opacity-0'">
-                
+
                 {{-- Detail Atas (Grid Data) --}}
                 <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    
+
                     <div class="flex w-full gap-4">
                         <div class="mt-0.5 shrink-0">
                             <span class="grid size-10 place-items-center rounded-lg bg-brand-50 text-brand-600">
                                 <x-icon name="lucide:calendar" class="size-5" />
                             </span>
                         </div>
-                        
+
                         <div class="grid w-full grid-cols-2 gap-4 sm:grid-cols-3">
                             <div>
                                 <p class="text-sm font-bold text-slate-900">{{ $r['date'] ?? '4 Oktober 2026' }}</p>
@@ -97,7 +98,7 @@
                 {{-- Detail Bawah (Kode & Catatan Status) --}}
                 <div class="mt-4 flex flex-col justify-between gap-2 border-t border-slate-100 pt-3 text-xs sm:flex-row sm:items-center">
                     <span class="font-medium text-slate-400">{{ $r['code'] ?? 'RSP-261004-012' }}</span>
-                    <span class="font-medium {{ $r['status'] === 'Siap' ? 'text-emerald-700' : 'text-slate-500' }}">{{ $note }}</span>
+                    <span class="font-medium {{ $st === 'Siap' ? 'text-emerald-700' : 'text-slate-500' }}">{{ $note }}</span>
                 </div>
 
                 {{-- Tombol Detail --}}
