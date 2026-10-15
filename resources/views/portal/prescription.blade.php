@@ -1,10 +1,27 @@
 @extends('layouts.portal')
 @section('title', 'Detail Resep')
 @php
-    $stages = [['Menunggu', 'Resep diterima'], ['Diproses', 'Obat disiapkan'], ['Siap', 'Siap Diambil'], ['Diambil', 'Obat diambil']];
-    $idx = collect($stages)->search(fn ($s) => $s[0] === $rx['status']);
-    $idx = $idx === false ? 0 : $idx;
-    $sub = ['Resep diterima', 'Obat disiapkan', 'Tahap saat ini', 'Belum diambil'];
+    $stages = [
+        ['Menunggu',   'Resep diterima'],
+        ['Diproses',   'Obat disiapkan'],
+        ['Siap',       'Siap diambil'],
+        ['Diserahkan', 'Obat diserahkan'],
+    ];
+    $alias = ['diambil' => 'Diserahkan', 'selesai' => 'Diserahkan'];
+    $raw   = trim((string) $rx['status']);
+    $key   = $alias[strtolower($raw)] ?? ucfirst(strtolower($raw));
+
+    $idx   = collect($stages)->search(fn ($s) => $s[0] === $key);
+    $idx   = $idx === false ? 0 : $idx;
+    $final = $key === 'Diserahkan';
+    $sub   = ['Resep diterima', 'Obat disiapkan', 'Menunggu pengambilan', 'Sudah diserahkan'];
+
+    $badgeText = match ($key) {
+        'Siap'       => 'Siap Diambil',
+        'Diserahkan' => 'Sudah Diserahkan',
+        default      => $raw,
+    };
+    $badgeTone = in_array($key, ['Siap', 'Diserahkan'], true) ? 'green' : null;
 @endphp
 @section('content')
 <div class="mx-auto max-w-4xl space-y-5">
@@ -18,27 +35,27 @@
     <x-card class="space-y-6 p-5 sm:p-6">
         <h2 class="font-semibold">Proses penyiapan obat</h2>
         <ol class="grid grid-cols-4">
-            @foreach ($stages as $i => [$key, $title])
-                @php $done = $i < $idx; $now = $i === $idx; @endphp
+            @foreach ($stages as $i => [$stageKey, $title])
+                @php $done = $final || $i < $idx; $now = ! $final && $i === $idx; @endphp
                 <li class="relative text-center">
-                    @unless ($loop->first)<span class="absolute right-1/2 top-4 h-0.5 w-full {{ $i <= $idx ? 'bg-brand-600' : 'bg-slate-200' }}"></span>@endunless
+                    @unless ($loop->first)<span class="absolute right-1/2 top-4 h-0.5 w-full {{ $final || $i <= $idx ? 'bg-brand-600' : 'bg-slate-200' }}"></span>@endunless
                     <span class="relative z-10 mx-auto grid size-8 place-items-center rounded-full text-sm font-semibold {{ $now ? 'bg-brand-600 text-white' : ($done ? 'bg-brand-50 text-brand-600' : 'bg-slate-100 text-slate-500') }}">
                         @if ($done) <x-icon name="lucide:check" /> @else {{ $i + 1 }} @endif
                     </span>
                     <p class="mt-2 text-xs font-semibold sm:text-sm {{ $now ? 'text-brand-600' : '' }}">{{ $title }}</p>
-                    <p class="hidden text-xs sm:block {{ $now ? 'text-brand-600' : 'text-slate-500' }}">{{ $now ? 'Tahap saat ini' : ($done ? $sub[$i] : $sub[$i]) }}</p>
+                    <p class="hidden text-xs sm:block {{ $now ? 'text-brand-600' : 'text-slate-500' }}">{{ $now ? 'Tahap saat ini' : $sub[$i] }}</p>
                 </li>
             @endforeach
         </ol>
 
-        @if ($rx['status'] === 'Siap')
+        @if ($key === 'Siap')
             <p class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"><x-icon name="lucide:circle-check" /> Obat Anda sudah siap, silakan ambil di loket apotek</p>
         @endif
 
         <div class="grid items-center gap-3 border-b border-slate-100 pb-5 sm:grid-cols-[1fr_1fr_auto]">
             <div><p class="text-lg font-semibold">{{ $rx['date'] }}</p><p class="text-xs text-slate-500">{{ $rx['code'] }} &bull; {{ $rx['time'] }} WIB</p></div>
             <div><p class="text-sm font-semibold">{{ $rx['doctor'] }}</p><p class="text-xs text-slate-500">{{ $rx['poli'] }}</p></div>
-            <x-badge :text="$rx['status'] === 'Siap' ? 'Siap Diambil' : $rx['status']" :tone="$rx['status'] === 'Siap' ? 'green' : null" />
+            <x-badge :text="$badgeText" :tone="$badgeTone" />
         </div>
 
         <div>
