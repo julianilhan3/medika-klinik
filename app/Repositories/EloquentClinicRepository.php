@@ -296,9 +296,19 @@ class EloquentClinicRepository implements ClinicRepository
             ->orderByDesc('date')
             ->orderBy('time');
 
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
+if (!empty($filters['status'])) {
+    $statusMap = [
+        'Menunggu Persetujuan' => 'pending',
+        'Disetujui' => 'approved',
+        'Check-in' => 'checked_in',
+        'Selesai' => 'done',
+        'Dibatalkan' => 'cancelled',
+    ];
+
+    $status = $statusMap[$filters['status']] ?? $filters['status'];
+
+    $query->where('status', $status);
+}
 
         if (!empty($filters['poli'])) {
             $query->whereHas('poli', function ($q) use ($filters) {
@@ -891,9 +901,18 @@ class EloquentClinicRepository implements ClinicRepository
             $query->whereHas('poli', fn ($q) => $q->where('name', $filters['poli']));
         }
 
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
+if (!empty($filters['status'])) {
+    $statusMap = [
+        'Menunggu' => 'checked_in',
+        'Sedang Diperiksa' => 'serving',
+        'Selesai' => 'done',
+        'Batal' => 'cancelled',
+    ];
+
+    $status = $statusMap[$filters['status']] ?? $filters['status'];
+
+    $query->where('status', $status);
+}
 
         if (!empty($filters['q'])) {
             $search = $filters['q'];

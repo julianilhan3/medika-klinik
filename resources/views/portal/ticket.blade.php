@@ -77,7 +77,7 @@
             @if (isset($live) && $live)<div>@include('partials.queue-live')</div>@endif
 
             @if ($t['status'] === 'Menunggu Persetujuan')
-                <p class="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800"><x-icon name="lucide:info" /> Dokter akan meninjau booking Anda. Pembaruan status tampil di halaman ini.</p>
+                <p class="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-800"><x-icon name="lucide:info" /> Dokter akan meninjau reservasi Anda. Jika ingin mengubah jadwal pemeriksaan, silakan lakukan paling lambat 1×24 jam sebelum waktu pemeriksaan yang telah ditentukan.</p>
             @endif
 
             <div class="grid gap-3 sm:grid-cols-2">
