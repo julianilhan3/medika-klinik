@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Contracts\ClinicRepository;
 use App\Models\Booking;
 use App\Models\DoctorSchedule;
+use App\Models\DoctorLeave;
 use App\Models\Examination;
 use App\Models\Medicine;
 use App\Models\Patient;
@@ -671,10 +672,39 @@ if (!empty($filters['status'])) {
         ->all();
 }
 
-    public function leaveConflicts(string $doctorId, string $date): array
-    {
+public function leaveConflicts(string $doctorId, string $date): array
+{
+    $doctor = $this->resolveDoctor($doctorId);
+
+    if (! $doctor) {
         return [];
     }
+
+    return Booking::query()
+        ->with('patient')
+        ->where('doctor_id', $doctor->id)
+        ->whereDate('date', $date)
+        ->whereIn('status', [
+            'pending',
+            'approved',
+            'checked_in',
+            'serving',
+        ])
+        ->orderBy('time')
+        ->get()
+        ->map(fn ($booking) => [
+            'code' => $booking->code,
+            'patient' => $booking->patient?->name ?? 'Pasien tidak diketahui',
+            'time' => substr((string) $booking->time, 0, 5),
+            'status' => [
+                'pending' => 'Menunggu Persetujuan',
+                'approved' => 'Disetujui',
+                'checked_in' => 'Check-in',
+                'serving' => 'Sedang Diperiksa',
+            ][$booking->status] ?? $booking->status,
+        ])
+        ->all();
+}
 
       public function patientVisits(string $patientId, ?string $search = null): array
     {
@@ -1230,9 +1260,21 @@ public function doctorQueue(): array
         $doctor = $this->resolveDoctor((string) $data['doctor_id']);
         $poli = Poli::findOrFail($data['poli_id']);
 
-        if (!$doctor) {
-            throw new \RuntimeException('Dokter tidak ditemukan.');
-        }
+if (!$doctor) {
+    throw new \RuntimeException('Dokter tidak ditemukan.');
+}
+
+// Tolak reservasi jika dokter sedang cuti.
+$onLeave = DoctorLeave::query()
+    ->where('doctor_id', $doctor->id)
+    ->whereDate('date', $data['date'])
+    ->exists();
+
+if ($onLeave) {
+    throw new \RuntimeException(
+        'Dokter sedang cuti pada tanggal yang dipilih. Silakan pilih tanggal lain.'
+    );
+}
 
         $booking = Booking::create([
             'code' => $this->generateBookingCode($data['date']),

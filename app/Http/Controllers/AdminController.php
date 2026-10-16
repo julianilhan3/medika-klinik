@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Contracts\ClinicRepository;
 use Illuminate\Http\Request;
 use App\Support\DoctorPhoto;
+use Illuminate\Support\Facades\DB;
 
 
 class AdminController extends Controller
@@ -247,15 +248,32 @@ class AdminController extends Controller
         ->startOfWeek()
         ->addWeeks($week);
 
-    return view('staff.admin.schedule', [
-        'doctors' => $doctors,
-        'doctor' => $doctor,
-        'sessions' => $sessions->all(),
-        'stats' => $stats,
-        'weekStart' => $weekStart,
-        'week' => $week,
-        'conflict' => [],
-    ]);
+    $weekEnd = $weekStart->copy()->addDays(6);
+
+$leaves = DoctorLeave::query()
+    ->where('doctor_id', User::query()
+        ->where('username', $doctor['username'] ?? '')
+        ->where('role', 'doctor')
+        ->value('id'))
+    ->whereBetween('date', [
+        $weekStart->toDateString(),
+        $weekEnd->toDateString(),
+    ])
+    ->get()
+    ->keyBy(fn ($leave) => $leave->date->format('Y-m-d'));
+
+
+return view('staff.admin.schedule', [
+    'doctors' => $doctors,
+    'doctor' => $doctor,
+    'sessions' => $sessions->all(),
+    'stats' => $stats,
+    'weekStart' => $weekStart,
+    'week' => $week,
+    'leaves' => $leaves,
+    'conflict' => [],
+]);
+
 }
 public function storeSchedule(Request $r)
 {
@@ -283,6 +301,7 @@ public function storeSchedule(Request $r)
 }
 
 
+
 public function blockLeave(Request $r)
 {
     $d = $r->validate([
@@ -296,32 +315,24 @@ public function blockLeave(Request $r)
     if ($d['scope'] !== 'full') {
         return back()
             ->withInput()
-            ->with(
-                'error',
-                'Cuti satu sesi belum tersedia. Pilih cuti sehari penuh.'
-            );
+            ->with('error', 'Cuti satu sesi belum tersedia. Pilih cuti sehari penuh.');
     }
 
-    
-$doctorInfo = collect($this->repo->doctors())
-    ->firstWhere('id', $d['doctor']);
+    $doctorInfo = collect($this->repo->doctors())
+        ->firstWhere('id', $d['doctor']);
 
-$doctor = null;
+    if (! $doctorInfo || empty($doctorInfo['username'])) {
+        return back()->with('error', 'Dokter tidak ditemukan.');
+    }
 
-if ($doctorInfo && ! empty($doctorInfo['username'])) {
     $doctor = User::query()
         ->where('username', $doctorInfo['username'])
         ->where('role', 'doctor')
         ->first();
-}
 
-if (! $doctor) {
-    return back()->with(
-        'error',
-        'Dokter tidak ditemukan.'
-    );
-}
-
+    if (! $doctor) {
+        return back()->with('error', 'Dokter tidak ditemukan.');
+    }
 
     $conflicts = $this->repo->leaveConflicts(
         $d['doctor'],
@@ -329,13 +340,10 @@ if (! $doctor) {
     );
 
     if ($conflicts && ! $r->boolean('confirm')) {
-        $doc = collect($this->repo->doctors())
-            ->firstWhere('id', $d['doctor']);
-
         return back()->withInput()->with('leave_conflict', [
             'rows' => $conflicts,
-            'doctor' => $doc['name'] ?? $doctor->name,
-            'poli' => $doc['poli'] ?? '-',
+            'doctor' => $doctorInfo['name'] ?? $doctor->name,
+            'poli' => $doctorInfo['poli'] ?? '-',
             'date' => \Illuminate\Support\Carbon::parse($d['date'])
                 ->translatedFormat('l, j F Y'),
             'reason' => $d['reason'],
@@ -344,21 +352,47 @@ if (! $doctor) {
         ]);
     }
 
-    DoctorLeave::updateOrCreate(
-        [
-            'doctor_id' => $doctor->id,
-            'date' => $d['date'],
-        ],
-        [
-            'scope' => 'full',
-            'reason' => $d['reason'],
-        ]
-    );
+    DB::transaction(function () use ($doctor, $d, $conflicts) {
+        if ($conflicts) {
+            $codes = collect($conflicts)
+                ->pluck('code')
+                ->filter()
+                ->all();
+
+            \App\Models\Booking::query()
+                ->where('doctor_id', $doctor->id)
+                ->whereDate('date', $d['date'])
+                ->whereIn('code', $codes)
+                ->whereIn('status', [
+                    'pending',
+                    'approved',
+                    'checked_in',
+                    'serving',
+                ])
+                ->update([
+                    'status' => 'cancelled',
+                    'rejection_reason' => 'Dokter cuti: ' . $d['reason'],
+                    'updated_at' => now(),
+                ]);
+        }
+
+        DoctorLeave::updateOrCreate(
+            [
+                'doctor_id' => $doctor->id,
+                'date' => $d['date'],
+            ],
+            [
+                'scope' => 'full',
+                'reason' => $d['reason'],
+            ]
+        );
+    });
 
     return redirect()
         ->route('admin.schedule', ['doctor' => $d['doctor']])
         ->with('status', 'Cuti dokter berhasil disimpan.');
 }
+
 
 
     public function reports()

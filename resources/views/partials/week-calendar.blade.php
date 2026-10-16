@@ -45,16 +45,25 @@
 
             {{-- Kolom Sesi per Hari --}}
             @for ($i = 0; $i < 7; $i++)
-                @php 
-                    // Ambil sesi untuk hari ke-$i dan reset index array-nya (values()->all())
-                    $daySessions = collect($sessions)->where('day', $i)->values()->all();
-                    $totalSessions = count($daySessions);
-                @endphp
+                @php
+    $date = $weekStart->copy()->addDays($i);
+    $dateKey = $date->format('Y-m-d');
+
+    $daySessions = collect($sessions)->where('day', $i)->values()->all();
+    $totalSessions = count($daySessions);
+
+    $leave = ($leaves ?? collect())->get($dateKey);
+@endphp
                 
              <div x-data="{ h: {{ ($h1 -$h0) * $px }}, px: {{$px }} }" 
      class="relative border-l border-slate-100" 
      x-bind:style="`height: ${h}px; background-image: linear-gradient(to bottom, #f1f5f9 1px, transparent 1px); background-size: 100% ${px}px;`">
-                    
+    @if ($leave)
+    <div class="absolute inset-1 z-10 flex flex-col items-center justify-center rounded-lg border border-amber-300 bg-amber-50 p-2 text-center text-xs text-amber-800">
+        <span class="font-bold">CUTI DOKTER</span>
+        <span class="mt-1">{{ $leave->reason }}</span>
+    </div>
+@endif
                     @if ($totalSessions === 0)
                         {{-- Jika hari Minggu kosong, tampilkan icon --}}
                         @if ($i === 6)

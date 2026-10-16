@@ -79,7 +79,7 @@
         <form method="POST" action="{{ route('admin.schedule.leave') }}" class="mt-4">@csrf
             @foreach ($conflict['raw'] as $k => $v)<input type="hidden" name="{{ $k }}" value="{{ $v }}">@endforeach
             <input type="hidden" name="confirm" value="1">
-            <label class="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" x-model="agree" class="mt-0.5 rounded border-slate-300 text-brand-600"> Saya setuju membatalkan {{ count($conflict['rows']) }} reservasi dan mengirim notifikasi kepada pasien.</label>
+            <label class="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" x-model="agree" class="mt-0.5 rounded border-slate-300 text-brand-600"> Saya setuju membatalkan {{ count($conflict['rows']) }} reservasi yang bentrok dengan jadwal cuti dokter.</label>
             <button class="btn btn-danger mt-4 w-full" :disabled="!agree">Blokir Cuti &amp; Batalkan Reservasi</button>
             <button type="button" @click="open = false" class="btn btn-outline mt-2 w-full">Kembali</button>
         </form>
