@@ -300,6 +300,49 @@ public function storeSchedule(Request $r)
     );
 }
 
+public function updateSchedule(Request $r, string $id)
+{
+    $d = $r->validate([
+        'day' => 'required|integer|between:0,6',
+        'start' => 'required|date_format:H:i',
+        'end' => 'required|date_format:H:i|after:start',
+        'quota' => 'required|integer|min:1|max:100',
+    ], [
+        'end.after' => 'Jam selesai harus setelah jam mulai.',
+    ]);
+
+    $ok = $this->repo->updateSchedule($id, $d);
+
+    if (! $ok) {
+        return back()->with(
+            'error',
+            'Jadwal gagal diperbarui. Pastikan dokter belum punya sesi lain di hari yang sama.'
+        );
+    }
+
+    return back()->with(
+        'status',
+        'Jadwal praktik diperbarui.'
+    );
+}
+
+public function destroySchedule(string $id)
+{
+    $ok = $this->repo->deleteSchedule($id);
+
+    if (! $ok) {
+        return back()->with(
+            'error',
+            'Jadwal gagal dihapus.'
+        );
+    }
+
+    return back()->with(
+        'status',
+        'Jadwal praktik dihapus.'
+    );
+}
+
 
 
 public function blockLeave(Request $r)

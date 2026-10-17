@@ -34,9 +34,9 @@
             <a href="{{ route('admin.schedule', ['doctor' => $doctor['id'], 'week' => $week + 1]) }}" class="btn btn-outline btn-sm" aria-label="Minggu berikutnya"><x-icon name="lucide:chevron-right" /></a>
         </div>
     </div>
-    @include('partials.week-calendar')
+    @include('partials.week-calendar', ['editable' => true])
 </x-card>
-<p class="mt-4 flex items-center gap-2 text-xs text-slate-500"><x-icon name="lucide:info" class="text-base" /> Jadwal berulang setiap minggu. Tanggal cuti menutup seluruh slot pada hari tersebut.</p>
+<p class="mt-4 flex items-center gap-2 text-xs text-slate-500"><x-icon name="lucide:info" class="text-base" /> Jadwal berulang setiap minggu. Klik sesi di kalender untuk mengubah atau menghapusnya. Tanggal cuti menutup seluruh slot pada hari tersebut.</p>
 
 {{-- Atur jadwal --}}
 <x-modal name="session" title="Atur jadwal praktik">
@@ -48,6 +48,22 @@
         <x-field label="Kuota pasien" name="quota" type="number" value="15" min="1" />
         <div class="flex justify-end gap-2"><button type="button" class="btn btn-outline" @click="open = false">Batal</button><button class="btn btn-primary">Simpan</button></div>
     </form>
+</x-modal>
+
+{{-- Ubah / hapus jadwal --}}
+<x-modal name="edit-session" title="Ubah jadwal praktik">
+    <form method="POST" :action="'{{ url('staff/admin/jadwal-praktik') }}/' + d.id" class="space-y-4">@csrf @method('PUT')
+        <p class="text-sm text-slate-500">Sesi berulang setiap minggu untuk {{ $doctor['name'] }}.</p>
+        <div><label class="label">Hari</label><select name="day" class="input" x-model="d.day">@foreach (['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] as $i => $n)<option value="{{ $i }}">{{ $n }}</option>@endforeach</select></div>
+        <div class="grid grid-cols-2 gap-3"><x-field label="Mulai" name="start" type="time" model="d.start" /><x-field label="Selesai" name="end" type="time" model="d.end" /></div>
+        <x-field label="Kuota pasien" name="quota" type="number" min="1" max="100" model="d.quota" />
+        <p x-show="d.booked > 0" class="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"><x-icon name="lucide:triangle-alert" class="mt-0.5 text-base" /> <span><b x-text="d.booked"></b> reservasi sudah terdaftar pada sesi ini. Pastikan perubahan jam tidak merugikan pasien.</span></p>
+        <div class="flex items-center justify-between gap-2">
+            <button type="submit" form="delete-session-form" class="btn btn-outline text-red-600" onclick="return confirm('Hapus sesi praktik ini? Pasien tidak bisa lagi memesan slot pada hari tersebut.')"><x-icon name="lucide:trash-2" /> Hapus</button>
+            <div class="flex gap-2"><button type="button" class="btn btn-outline" @click="open = false">Batal</button><button class="btn btn-primary">Simpan</button></div>
+        </div>
+    </form>
+    <form id="delete-session-form" method="POST" :action="'{{ url('staff/admin/jadwal-praktik') }}/' + d.id" class="hidden">@csrf @method('DELETE')</form>
 </x-modal>
 
 {{-- Blokir cuti --}}

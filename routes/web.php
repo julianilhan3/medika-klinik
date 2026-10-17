@@ -75,6 +75,8 @@ Route::prefix('staff')->group(function () {
         Route::get('/jadwal-praktik', 'schedule')->name('schedule');
         Route::post('/jadwal-praktik', 'storeSchedule')->name('schedule.store');
         Route::post('/jadwal-praktik/cuti', 'blockLeave')->name('schedule.leave');
+        Route::put('/jadwal-praktik/{id}', 'updateSchedule')->name('schedule.update');
+        Route::delete('/jadwal-praktik/{id}', 'destroySchedule')->name('schedule.destroy');
         Route::get('/laporan', 'reports')->name('reports');
         Route::get('/staf', 'staff')->name('staff.index');
         Route::post('/staf', 'storeStaff')->name('staff.store');

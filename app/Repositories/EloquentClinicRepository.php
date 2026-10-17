@@ -580,6 +580,44 @@ public function updatePatient(string $id, array $data): bool
     return true;
 }
 
+    public function updateSchedule(string $id, array $data): bool
+{
+    $schedule = DoctorSchedule::find($id);
+
+    if (! $schedule) {
+        return false;
+    }
+
+    // Satu dokter hanya punya satu sesi per hari (slot dihitung dari sesi pertama di hari itu).
+    $bentrok = DoctorSchedule::query()
+        ->where('doctor_id', $schedule->doctor_id)
+        ->where('day', $data['day'])
+        ->where('id', '!=', $schedule->id)
+        ->exists();
+
+    if ($bentrok) {
+        return false;
+    }
+
+    return $schedule->update([
+        'day' => $data['day'],
+        'start' => $data['start'],
+        'end' => $data['end'],
+        'quota' => $data['quota'],
+    ]);
+}
+
+    public function deleteSchedule(string $id): bool
+{
+    $schedule = DoctorSchedule::find($id);
+
+    if (! $schedule) {
+        return false;
+    }
+
+    return (bool) $schedule->delete();
+}
+
    public function createStaff(array $data): array
 {
     $poliId = $data['poli_id'] ?? null;
@@ -665,6 +703,7 @@ public function updatePatient(string $id, array $data): bool
         ->orderBy('day')
         ->get()
         ->map(fn ($schedule) => [
+            'id' => $schedule->id,
             'day' => (int) $schedule->day,
             'start' => substr((string) $schedule->start, 0, 5),
             'end' => substr((string) $schedule->end, 0, 5),

@@ -77,6 +77,10 @@ interface ClinicRepository
     // Admin: jadwal dan staf
     public function createSchedule(array $data): bool;
 
+    public function updateSchedule(string $id, array $data): bool;
+
+    public function deleteSchedule(string $id): bool;
+
     public function createStaff(array $data): array;
 
     public function updateStaff(

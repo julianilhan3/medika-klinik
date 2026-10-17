@@ -89,8 +89,13 @@
                                 $height = max(0, ($toH($end) - $toH($start)) * $px - 4);
                             @endphp
                             
-                            <div class="absolute inset-x-1 overflow-hidden rounded-lg border-l-4 border-brand-600 bg-brand-50 p-2 text-xs text-brand-700"
-                                 style="top: {{ $top }}px; height: {{ $height }}px">
+                            <div class="absolute inset-x-1 overflow-hidden rounded-lg border-l-4 border-brand-600 bg-brand-50 p-2 text-xs text-brand-700 {{ ($editable ?? false) && isset($s['id']) ? 'cursor-pointer transition hover:bg-brand-100 hover:shadow' : '' }}"
+                                 style="top: {{ $top }}px; height: {{ $height }}px"
+                                 @if (($editable ?? false) && isset($s['id']))
+                                 role="button" tabindex="0" title="Klik untuk ubah jadwal"
+                                 @click="$dispatch('open-modal', { name: 'edit-session', data: @js(['id' => $s['id'], 'day' => (string) $i, 'start' => $start, 'end' => $end, 'quota' => $quota, 'booked' => $booked]) })"
+                                 @keydown.enter="$el.click()"
+                                 @endif>
                                 <p class="font-semibold">{{ $start }}-{{ $end }}</p>
                                 <p class="mt-0.5 leading-tight text-slate-700">{{ $poli }}</p>
                                 <p class="mt-1 text-slate-500">Kuota {{ $quota }}</p>
