@@ -36,6 +36,42 @@
     </div>
     @include('partials.week-calendar', ['editable' => true])
 </x-card>
+{{-- Daftar sesi: ubah / hapus tanpa harus mencari di kalender --}}
+<x-card class="mt-5">
+    <div class="flex items-center justify-between gap-3 p-5 pb-3">
+        <h2 class="flex items-center gap-2 font-semibold"><x-icon name="lucide:list-checks" class="text-brand-600" /> Sesi praktik {{ $doctor['name'] }}</h2>
+        <span class="text-xs text-slate-500">{{ count($sessions) }} sesi per minggu</span>
+    </div>
+    @php($hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
+    @if (count($sessions))
+        <div class="overflow-x-auto">
+            <table class="tbl">
+                <thead><tr><th>Hari</th><th>Jam praktik</th><th>Kuota</th><th>Reservasi</th><th class="text-right">Aksi</th></tr></thead>
+                <tbody>
+                @foreach (collect($sessions)->sortBy('day') as $s)
+                    <tr>
+                        <td class="font-medium">{{ $hari[$s['day']] ?? '-' }}</td>
+                        <td>{{ $s['start'] }} - {{ $s['end'] }}</td>
+                        <td>{{ $s['quota'] }} pasien</td>
+                        <td>{{ $s['booked'] ?? 0 }}</td>
+                        <td class="text-right">
+                            @if (isset($s['id']))
+                                <button type="button" class="btn btn-outline btn-sm"
+                                        @click="$dispatch('open-modal', { name: 'edit-session', data: @js(['id' => $s['id'], 'day' => (string) $s['day'], 'start' => $s['start'], 'end' => $s['end'], 'quota' => (int) $s['quota'], 'booked' => (int) ($s['booked'] ?? 0)]) })">
+                                    <x-icon name="lucide:pencil" /> Ubah
+                                </button>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <p class="px-5 pb-5 text-sm text-slate-500">Dokter ini belum punya sesi praktik. Klik <b>Atur Jadwal</b> untuk menambahkannya.</p>
+    @endif
+</x-card>
+
 <p class="mt-4 flex items-center gap-2 text-xs text-slate-500"><x-icon name="lucide:info" class="text-base" /> Jadwal berulang setiap minggu. Klik sesi di kalender untuk mengubah atau menghapusnya. Tanggal cuti menutup seluruh slot pada hari tersebut.</p>
 
 {{-- Atur jadwal --}}

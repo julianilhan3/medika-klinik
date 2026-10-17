@@ -96,6 +96,9 @@
                                  @click="$dispatch('open-modal', { name: 'edit-session', data: @js(['id' => $s['id'], 'day' => (string) $i, 'start' => $start, 'end' => $end, 'quota' => $quota, 'booked' => $booked]) })"
                                  @keydown.enter="$el.click()"
                                  @endif>
+                                @if (($editable ?? false) && isset($s['id']))
+                                    <span class="absolute right-1.5 top-1.5 inline-flex items-center gap-1 rounded-md bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"><x-icon name="lucide:pencil" class="text-[11px]" /> Ubah</span>
+                                @endif
                                 <p class="font-semibold">{{ $start }}-{{ $end }}</p>
                                 <p class="mt-0.5 leading-tight text-slate-700">{{ $poli }}</p>
                                 <p class="mt-1 text-slate-500">Kuota {{ $quota }}</p>
