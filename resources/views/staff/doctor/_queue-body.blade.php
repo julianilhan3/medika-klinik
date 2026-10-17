@@ -18,7 +18,25 @@
                 <p>{{ $next['age'] }} tahun - {{ $next['gender'] }} - {{ $next['rm'] }}</p>
                 <p class="mt-1"><b class="text-slate-700">Keluhan:</b> {{ $next['complaint'] }}</p>
                 <p class="text-xs text-slate-500">Terdaftar {{ $next['registered'] }} WIB</p>
-                @if ($next['allergies'])<p class="mt-2 inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"><x-icon name="lucide:triangle-alert" class="text-sm" /> Alergi: {{ implode(', ', $next['allergies']) }}</p>@endif
+                
+@php
+    $allergies = $next['allergies'] ?? '';
+    $allergyText = is_array($allergies)
+        ? implode(', ', $allergies)
+        : trim((string) $allergies);
+@endphp
+
+@if ($allergyText !== '')
+    <p class="mt-2 inline-flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+        <x-icon name="lucide:triangle-alert" class="text-sm" />
+        Alergi: {{ $allergyText }}
+    </p>
+@else
+    <p class="mt-2 text-xs text-amber-700">
+        Informasi alergi belum tersedia.
+    </p>
+@endif
+
             </div>
         </div>
         <div>

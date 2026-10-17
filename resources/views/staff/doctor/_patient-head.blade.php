@@ -6,7 +6,31 @@
     </div>
     <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
         <div><dt class="text-xs text-slate-500">Tanggal kunjungan</dt><dd class="font-semibold">{{ now()->translatedFormat('j F Y') }} - {{ $p['registered'] }} WIB</dd></div>
-        <div><dt class="text-xs text-slate-500">Dokter pemeriksa</dt><dd class="font-semibold">{{ session('staff.name') }}</dd></div>
-        <div><dt class="text-xs text-slate-500">Riwayat alergi</dt><dd class="font-semibold {{ $p['allergies'] ? 'text-red-600' : '' }}">{{ $p['allergies'] ? implode(', ', $p['allergies']).' - '.strtolower($p['allergy_reaction']) : 'Tidak ada alergi diketahui' }}</dd></div>
+        <div>
+    <dt class="text-xs text-slate-500">Dokter pemeriksa</dt>
+    <dd class="font-semibold">
+        {{ session('staff.name') ?? auth()->user()?->name ?? 'Dokter belum teridentifikasi' }}
+    </dd>
+</div>
+        
+@php
+    $allergies = $p['allergies'] ?? '';
+    $allergyText = is_array($allergies)
+        ? implode(', ', $allergies)
+        : trim((string) $allergies);
+@endphp
+
+<div>
+    <dt class="text-xs text-slate-500">Riwayat alergi</dt>
+    <dd class="font-semibold {{ $allergyText !== '' ? 'text-red-600' : 'text-amber-700' }}">
+        @if ($allergyText !== '')
+            {{ $allergyText }}
+            - {{ strtolower($p['allergy_reaction'] ?? 'reaksi belum diketahui') }}
+        @else
+            Informasi alergi belum tersedia
+        @endif
+    </dd>
+</div>
+
     </dl>
 </x-card>

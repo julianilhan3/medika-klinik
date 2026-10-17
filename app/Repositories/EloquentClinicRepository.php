@@ -483,20 +483,24 @@ if (!empty($filters['status'])) {
         return 'RM-' . str_pad((string) ($number + 1), 4, '0', STR_PAD_LEFT);
     }
 
-    public function updatePatient(string $id, array $data): bool
-    {
-        $patient = Patient::find($id);
 
-        if (!$patient) {
-            return false;
-        }
+public function updatePatient(string $id, array $data): bool
+{
+    $patient = Patient::find($id);
 
-        return $patient->update([
-            'name' => $data['name'] ?? $patient->name,
-            'phone' => $data['phone'] ?? $patient->phone,
-            'address' => $data['address'] ?? $patient->address,
-        ]);
+    if (!$patient) {
+        return false;
     }
+
+    return $patient->update([
+        'name' => $data['name'] ?? $patient->name,
+        'phone' => $data['phone'] ?? $patient->phone,
+        'address' => $data['address'] ?? $patient->address,
+        'email' => $data['email'] ?? $patient->email,
+        'allergies' => $data['allergies'] ?? $patient->allergies,
+    ]);
+}
+
 
     public function deletePatient(string $id): bool
     {

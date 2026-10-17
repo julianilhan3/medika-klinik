@@ -262,6 +262,7 @@ $active = $allTickets
         'date' => 'required|date|after_or_equal:today',
         'time' => 'required',
         'complaint' => 'required|string|max:500',
+        'allergies' => 'nullable|string|max:255',
     ]);
 
     $patientId = session('patient.id');
@@ -270,6 +271,12 @@ $active = $allTickets
         return redirect()->route('portal.login')
             ->with('error', 'Silakan login terlebih dahulu.');
     }
+
+    if (isset($d['allergies']) && trim($d['allergies']) !== '') {
+    $this->repo->updatePatient($patientId, [
+        'allergies' => trim($d['allergies']),
+    ]);
+}
 
     $doctor = collect($this->repo->doctors())
     ->firstWhere('id', $d['doctor']);

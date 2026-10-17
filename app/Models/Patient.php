@@ -10,16 +10,17 @@ class Patient extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = [
-        'rm',
-        'nik',
-        'name',
-        'birth',
-        'gender',
-        'phone',
-        'address',
-        'password',
-    ];
+protected $fillable = [
+    'rm',
+    'nik',
+    'name',
+    'birth',
+    'gender',
+    'phone',
+    'address',
+    'password',
+    'allergies',
+];
 
     protected $casts = [
         'birth' => 'date',

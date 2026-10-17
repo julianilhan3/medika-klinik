@@ -16,6 +16,7 @@ x-data="{
     date: @js(old('date', data_get($pre, 'date', ''))),
     time: @js(old('time', '')),
     complaint: @js(old('complaint', '')),
+    allergies: @js(old('allergies', '')),
 
     doctors: @js($doctors),
     slots: @js($slots),
@@ -498,6 +499,28 @@ x-data="{
             </div>
         </div>
 
+
+<div>
+    <label for="allergies" class="mb-1.5 block text-sm font-semibold">
+        Alergi Obat atau Makanan
+    </label>
+
+    <textarea
+        id="allergies"
+        name="allergies"
+        x-model="allergies"
+        rows="2"
+        maxlength="255"
+        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+        placeholder="Contoh: alergi amoksisilin atau udang. Kosongkan jika belum diketahui."
+    ></textarea>
+
+    <p class="mt-1.5 text-xs text-slate-500">
+        Informasi ini akan membantu dokter mempertimbangkan pengobatan.
+    </p>
+</div>
+
+
         <div class="grid gap-3 sm:grid-cols-[auto_1fr]">
             <button
                 type="button"
@@ -578,6 +601,17 @@ x-data="{
                     <dt class="shrink-0 text-slate-500">Keluhan</dt>
                     <dd class="text-right font-medium" x-text="complaint"></dd>
                 </div>
+
+                
+<div class="flex justify-between gap-6 py-2.5">
+    <dt class="shrink-0 text-slate-500">Alergi</dt>
+    <dd
+        class="text-right font-medium"
+        x-text="allergies.trim() || 'Belum diketahui'"
+    ></dd>
+</div>
+
+
             </dl>
         </div>
 
